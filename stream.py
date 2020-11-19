@@ -27,6 +27,7 @@ parser.add_argument("-s","--server", help="Big Blue Button Server URL")
 parser.add_argument("-p","--secret", help="Big Blue Button Secret")
 parser.add_argument("-i","--id", help="Big Blue Button Meeting ID")
 parser.add_argument("-I","--intro", help="Intro file to play before streaming")
+parser.add_argument("-k","--ignoreTlsVerification", help="do not check TLS certificates validity")
 parser.add_argument("-B","--beginIntroAt", help="begin intro at position (e.g. 00:01:05)")
 parser.add_argument("-E","--endIntroAt", help="End intro at position (e.g. 01:00:04)")
 parser.add_argument("-l","--stream", help="live stream a BigBlueButton meeting",action="store_true")
@@ -56,6 +57,8 @@ def set_up():
     options.add_argument('--shm-size=1gb') 
     options.add_argument('--disable-dev-shm-usage') 
     options.add_argument('--start-fullscreen') 
+    if args.ignoreTlsVerification is True:
+        options.add_argument('--ignore-certificate-errors')
     
     logging.info('Starting browser!!')
 

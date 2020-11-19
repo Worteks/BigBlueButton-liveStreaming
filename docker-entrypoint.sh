@@ -1,11 +1,12 @@
 #!/bin/bash
 
-if test -s /etc/ssl/certs/ca-certificates.crt; then
-	# https://unix.stackexchange.com/a/122768/155682
-	# https://chromium.googlesource.com/chromium/src/+/master/docs/linux/cert_management.md
-	mkdir -p $HOME/.pki/nssdb
-	certutil -d sql:$HOME/.pki/nssdb -A -t TC -n system-ca-certificates -i /etc/ssl/certs/ca-certificates.crt
-fi
+# does not work:
+#if test -s /etc/ssl/certs/ca-certificates.crt; then
+#	# https://unix.stackexchange.com/a/122768/155682
+#	# https://chromium.googlesource.com/chromium/src/+/master/docs/linux/cert_management.md
+#	mkdir -p $HOME/.pki/nssdb
+#	certutil -d sql:$HOME/.pki/nssdb -A -t TC -n system-ca-certificates -i /etc/ssl/certs/ca-certificates.crt
+#fi
 
 if pulseaudio --check ; then
 	echo "Pulseaudio already running - killing it..."

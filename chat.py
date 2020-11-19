@@ -20,6 +20,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-s","--server", help="Big Blue Button Server URL")
 parser.add_argument("-p","--secret", help="Big Blue Button Secret")
 parser.add_argument("-i","--id", help="Big Blue Button Meeting ID")
+parser.add_argument("-k","--ignoreTlsVerification", help="do not check TLS certificates validity")
 parser.add_argument("-S","--startMeeting", help="start the meeting if not running",action="store_true")
 parser.add_argument("-A","--attendeePassword", help="attendee password (required to create meetings)")
 parser.add_argument("-M","--moderatorPassword", help="moderator password (required to create a meeting)")
@@ -46,6 +47,8 @@ def set_up():
     options.add_argument('--shm-size=1gb')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--start-fullscreen')
+    if args.ignoreTlsVerification is True:
+        options.add_argument('--ignore-certificate-errors')
 
     logging.info('Starting browser to chat!!')
 
