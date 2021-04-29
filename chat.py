@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import sys, argparse, time, logging, os, redis
+import sys, argparse, time, subprocess, logging, os, redis
 from bigbluebutton_api_python import BigBlueButton
 from bigbluebutton_api_python import util as bbbUtil 
 from selenium import webdriver
@@ -11,7 +11,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
 browser = None
-selelnium_timeout = 30
+selenium_timeout = 30
 connect_timeout = 5
 
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
@@ -28,6 +28,10 @@ parser.add_argument("-T","--meetingTitle", help="meeting title (required to crea
 parser.add_argument("-u","--user", help="Name to join the meeting",default="Live")
 parser.add_argument("-r","--redis", help="Redis hostname",default="redis")
 parser.add_argument("-c","--channel", help="Redis channel",default="chat")
+parser.add_argument(
+   '--browser-disable-dev-shm-usage', action='store_true', default=False,
+   help='do not use /dev/shm',
+)
 args = parser.parse_args()
 
 bbb = BigBlueButton(args.server,args.secret)
@@ -40,15 +44,26 @@ def set_up():
     options.add_argument('--disable-infobars')
     options.add_argument('--no-sandbox')
     options.add_argument('--kiosk')
-    options.add_argument('--window-size=1920,1080')
+    options.add_argument('--window-size=1280,720')  # we do not need a big window for the chat
     options.add_argument('--window-position=0,0')
     options.add_experimental_option("excludeSwitches", ['enable-automation'])
     options.add_argument('--incognito')
-    options.add_argument('--shm-size=1gb')
-    options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--start-fullscreen')
     if args.ignoreTlsVerification is True:
         options.add_argument('--ignore-certificate-errors')
+    if args.browser_disable_dev_shm_usage:
+        options.add_argument('--disable-dev-shm-usage')
+    else:
+        dev_shm_size = int(subprocess.run('df /dev/shm/ --block-size=1M --output=size | tail -n 1', shell=True, stdout=subprocess.PIPE).stdout or '0')
+        required_dev_shm_size = 500  # in MB, 1024MB is recommended
+        if dev_shm_size < required_dev_shm_size:
+            logging.error(
+                'The size of /dev/shm/ is %sMB (minimum recommended is %sMB), '
+                'consider increasing the size of /dev/shm/ (shm-size docker parameter) or disabling /dev/shm usage '
+                '(see --browser-disable-dev-shm-usage or BROWSER_DISABLE_DEV_SHM_USAGE env variable).',
+                dev_shm_size, required_dev_shm_size
+            )
+            sys.exit(2)
 
     logging.info('Starting browser to chat!!')
 
@@ -69,12 +84,10 @@ def bbb_browser():
     logging.info(join_url)
     browser.get(join_url)
 
-    element = EC.presence_of_element_located((By.XPATH, '//span[contains(@class,"success")]'))
-    WebDriverWait(browser, selelnium_timeout).until(element)
-    browser.find_elements_by_xpath('//span[contains(@class,"success")]')[0].click()
+    time.sleep(6)
 
     element = EC.invisibility_of_element((By.CSS_SELECTOR, '.ReactModal__Overlay'))
-    WebDriverWait(browser, selelnium_timeout).until(element)
+    WebDriverWait(browser, selenium_timeout).until(element)
     browser.find_element_by_id('message-input').send_keys("Viewers of the live stream can now send messages to this meeting")
     browser.find_elements_by_css_selector('[aria-label="Send message"]')[0].click()
 
@@ -106,7 +119,7 @@ def get_join_url():
     joinParams['meetingID'] = args.id
     joinParams['fullName'] = args.user
     joinParams['password'] = pwd
-    joinParams['userdata-bbb_auto_join_audio'] = "true" 
+    joinParams['userdata-bbb_auto_join_audio'] = "false"
     joinParams['userdata-bbb_enable_video'] = 'false' 
     joinParams['userdata-bbb_listen_only_mode'] = "true" 
     joinParams['userdata-bbb_force_listen_only'] = "true" 

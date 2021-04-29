@@ -7,6 +7,7 @@
 #	mkdir -p $HOME/.pki/nssdb
 #	certutil -d sql:$HOME/.pki/nssdb -A -t TC -n system-ca-certificates -i /etc/ssl/certs/ca-certificates.crt
 #fi
+. /usr/src/app/nsswrapper.sh
 
 if pulseaudio --check ; then
 	echo "Pulseaudio already running - killing it..."

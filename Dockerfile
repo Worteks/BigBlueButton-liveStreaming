@@ -7,7 +7,8 @@ WORKDIR /usr/src/app
 
 RUN apt-get update && apt-get install -y software-properties-common && apt-get update && add-apt-repository ppa:jonathonf/ffmpeg-4
 
-RUN apt-get update && apt-get install -y \
+RUN ln -s -f /bin/true /usr/bin/chfn \
+    && apt-get update && apt-get install -y \
         python3-pip \
         python3-dev \
         xvfb \
@@ -16,10 +17,14 @@ RUN apt-get update && apt-get install -y \
         dbus-x11 \
         libasound2 \
         libasound2-plugins\
+        libnss-wrapper \
         alsa-utils \
         alsa-oss \
         pulseaudio \
-        pulseaudio-utils 
+        pulseaudio-utils \
+    && mkdir /home/lithium /var/run/pulse /run/user/lithium \
+    && chown -R 1001:0 /home/lithium /run/user/lithium /var/run/pulse \
+    && chmod -R g=u /home/lithium /run/user/lithium /var/run/pulse
 
 RUN ln -s /usr/bin/python3 /usr/local/bin/python \
     && pip3 install --upgrade pip
@@ -42,6 +47,7 @@ RUN apt-get update && \
     unzip chromedriver* && \
     pwd && ls
 
+ENV BBB_RESOLUTION 1920x1080
 ENV BBB_AS_MODERATOR false
 ENV BBB_USER_NAME Live
 ENV BBB_CHAT_NAME Chat
@@ -57,7 +63,9 @@ COPY stream.py ./
 COPY chat.py ./
 COPY startStream.sh ./
 COPY docker-entrypoint.sh ./
+COPY nsswrapper.sh ./
 
 ENTRYPOINT ["sh","docker-entrypoint.sh"]
 
 CMD ["sh","startStream.sh" ]
+USER 1001
