@@ -112,7 +112,7 @@ class BigBlueButton:
     # as ElementTree.Element, otherwise it saves the response to the specific file path
     def get_default_config_xml(self, file_path=None):
         url = self.__urlBuilder.buildUrl(ApiMethod.GET_DEFAULT_CONFIG_XML)
-        response = urlopen(url, ctx=mycontext).read()
+        response = urlopen(url, context=mycontext).read()
         if file_path is None:
             return response
         else:
@@ -136,9 +136,9 @@ class BigBlueButton:
 
         # if data is none, then we send a GET request, if not, then we send a POST request
         if data is None:
-            response = urlopen(url, ctx=mycontext).read()
+            response = urlopen(url, context=mycontext).read()
         else:
-            response = urlopen(url, ctx=mycontext, data=urlencode(data).encode()).read()
+            response = urlopen(url, context=mycontext, data=urlencode(data).encode()).read()
 
         try:
             rawXml = parse(response)["response"]
