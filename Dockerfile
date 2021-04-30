@@ -30,12 +30,14 @@ RUN ln -s /usr/bin/python3 /usr/local/bin/python \
     && pip3 install --upgrade pip
 
 COPY py_requirements.txt ./
-
 RUN pip install --no-cache-dir -r py_requirements.txt
 
+# don't do this ...
+COPY bigbluebutton.py-no-tls-verify /usr/local/lib/python3.6/dist-packages/bigbluebutton_api_python/bigbluebutton.py
 
-
-RUN apt-get update && \
+RUN chown root:staff /usr/local/lib/python3.6/dist-packages/bigbluebutton_api_python/bigbluebutton.py && \
+    chmod 644 /usr/local/lib/python3.6/dist-packages/bigbluebutton_api_python/bigbluebutton.py && \
+    apt-get update && \
     apt-get install -y gnupg wget curl unzip --no-install-recommends && \
     wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list && \
