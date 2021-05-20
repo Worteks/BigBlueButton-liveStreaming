@@ -4,12 +4,13 @@
 import sys, argparse, time, subprocess, shlex, logging, os, re
 
 from bigbluebutton_api_python import BigBlueButton, exception
-from bigbluebutton_api_python import util as bbbUtil 
+from bigbluebutton_api_python import util as bbbUtil
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys  
+from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import JavascriptException
 from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.chrome.options import Options  
+from selenium.common.exceptions import ElementClickInterceptedException
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -94,15 +95,15 @@ def set_up():
 
     assert re.fullmatch(r'\d+x\d+', args.resolution)
 
-    options = Options()  
-    options.add_argument('--disable-infobars') 
-    options.add_argument('--no-sandbox') 
-    options.add_argument('--kiosk') 
+    options = Options()
+    options.add_argument('--disable-infobars')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--kiosk')
     options.add_argument('--window-size=%s' % args.resolution.replace('x', ','))
     options.add_argument('--window-position=0,0')
     options.add_experimental_option("excludeSwitches", ['enable-automation'])
     options.add_experimental_option('prefs', {'intl.accept_languages':'{locale}'.format(locale='en_US.UTF-8')})
-    options.add_argument('--start-fullscreen') 
+    options.add_argument('--start-fullscreen')
     if args.ignoreTlsVerification is True:
         options.add_argument('--ignore-certificate-errors')
     options.add_argument('--autoplay-policy=no-user-gesture-required')
@@ -165,7 +166,10 @@ def bbb_browser():
             if element.is_enabled():
                 element.click()
     except NoSuchElementException:
-        # ignore (chat might be disabled) 
+        # ignore (chat might be disabled)
+        logging.info("could not find chat input or chat toggle")
+    except ElementClickInterceptedException:
+        # ignore (chat might be disabled)
         logging.info("could not find chat input or chat toggle")
 
     time.sleep(10)
@@ -176,7 +180,7 @@ def bbb_browser():
                 element.click()
         except NoSuchElementException:
             logging.info("could not find users and messages toggle")
- 
+
     try:
         browser.execute_script("document.querySelector('[aria-label=\"Users and messages toggle\"]').style.display='none';")
     except JavascriptException:
@@ -202,13 +206,13 @@ def get_join_url():
     joinParams['meetingID'] = args.id
     joinParams['fullName'] = args.user
     joinParams['password'] = pwd
-    joinParams['userdata-bbb_auto_join_audio'] = "true" 
-    joinParams['userdata-bbb_enable_video'] = 'true' 
-    joinParams['userdata-bbb_listen_only_mode'] = "true" 
-    joinParams['userdata-bbb_force_listen_only'] = "true" 
-    joinParams['userdata-bbb_skip_check_audio'] = 'true' 
+    joinParams['userdata-bbb_auto_join_audio'] = "true"
+    joinParams['userdata-bbb_enable_video'] = 'true'
+    joinParams['userdata-bbb_listen_only_mode'] = "true"
+    joinParams['userdata-bbb_force_listen_only'] = "true"
+    joinParams['userdata-bbb_skip_check_audio'] = 'true'
     joinParams['joinViaHtml5'] = 'true'
-    return bbbUB.buildUrl("join", params=joinParams) 
+    return bbbUB.buildUrl("join", params=joinParams)
 
 def stream_intro():
     introBegin = ""
